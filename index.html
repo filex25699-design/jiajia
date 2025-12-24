@@ -159,6 +159,14 @@
         .modal.show .modal-content { transform: scale(1); opacity: 1; }
         .modal h3 { color: #d35400; margin-top: 0; }
         .modal p { color: #333; font-size: 1.1rem; line-height: 1.6; }
+        /* 确保弹窗里的图片自适应好看 */
+        #m-content img {
+            max-width: 100%;  /* 图片宽度不超过卡片 */
+            height: auto;     /* 高度自动，防止变形 */
+            display: block;   /* 消除底部空隙 */
+            margin: 10px auto;/* 居中 */
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2); /* 加点立体阴影 */
+        }
         .close-btn {
             background: #27ae60; color: white; border: none;
             padding: 10px 25px; border-radius: 20px; font-size: 16px;
@@ -190,7 +198,7 @@
         <canvas id="snow-canvas"></canvas>
         <div class="music-toggle" id="musicBtn" onclick="toggleMute()">🎵</div>
 
-        <div class="tree-container" onclick="showModal('🎄 圣诞树', '愿这棵树的星光<br>照亮你未来的每一天<br>永远开心快乐！')">
+        <div class="tree-container" onclick="showModal('🎄 专属惊喜', '<img src=\'https://i.postimg.cc/vTYHsBZH/20251224-173413.jpg\' style=\'width:100%; height:auto; border-radius:10px;\'>')">
             <svg width="300" height="380" viewBox="0 0 200 260">
                 <rect x="90" y="220" width="20" height="40" fill="#5D4037" rx="2" />
                 <path d="M20,230 Q100,260 180,230 L160,190 L180,190 Q100,220 20,190 L40,190 L20,230 Z" fill="#1B5E20" />
