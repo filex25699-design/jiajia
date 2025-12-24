@@ -2,10 +2,10 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Merry Christmas 佳佳</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>🎄 圣诞快乐 佳佳</title>
     <style>
-        /* --- 全局样式 --- */
+        /* --- 全局设置 --- */
         body {
             margin: 0;
             padding: 0;
@@ -13,294 +13,403 @@
             height: 100vh;
             background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
             overflow: hidden;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
             font-family: 'Arial', sans-serif;
             color: white;
             user-select: none;
             -webkit-tap-highlight-color: transparent;
         }
 
-        /* --- 1. 开屏引导页 (强制用户点击以解锁声音) --- */
-        #start-screen {
+        /* --- 1. 启动页 (必须有这个才能解锁声音) --- */
+        #start-overlay {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.9);
-            z-index: 2000;
+            background: rgba(0,0,0,0.95);
+            z-index: 9999;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             transition: opacity 0.8s;
         }
-        
+
         .start-btn {
             background: #c0392b;
-            color: #fff;
-            border: 2px solid #e74c3c;
+            color: white;
+            font-size: 22px;
             padding: 15px 40px;
-            font-size: 20px;
+            border: none;
             border-radius: 50px;
             cursor: pointer;
-            animation: pulse 1.5s infinite;
-            box-shadow: 0 0 20px rgba(192, 57, 43, 0.6);
-            margin-top: 20px;
+            box-shadow: 0 0 20px rgba(231, 76, 60, 0.6);
+            animation: pulseBtn 1.5s infinite;
+            margin-top: 30px;
+        }
+
+        @keyframes pulseBtn {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
         }
 
         /* --- 2. 主场景 --- */
-        #snow-canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; }
-        
-        .scene {
-            position: relative;
-            z-index: 10;
+        #main-scene {
+            opacity: 0; /* 初始隐藏 */
+            transition: opacity 1.5s;
+            width: 100%;
+            height: 100%;
             display: flex;
             flex-direction: column;
             align-items: center;
-            opacity: 0; /* 初始隐藏，点击开始后显示 */
-            transition: opacity 1s;
+            justify-content: center;
+            position: relative;
+            z-index: 10;
+        }
+
+        /* 雪花画布 */
+        #snow-canvas {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            pointer-events: none;
+            z-index: 1;
         }
 
         /* 音乐控制按钮 */
-        .music-control {
-            position: fixed; top: 20px; right: 20px; z-index: 100;
-            font-size: 24px; cursor: pointer;
-            background: rgba(255,255,255,0.1); padding: 8px; border-radius: 50%;
+        .music-toggle {
+            position: absolute;
+            top: 20px; right: 20px;
+            background: rgba(255,255,255,0.2);
+            padding: 10px;
+            border-radius: 50%;
+            cursor: pointer;
+            z-index: 100;
             border: 1px solid rgba(255,255,255,0.3);
+            font-size: 24px;
         }
-        .music-spin { animation: spin 3s linear infinite; }
+        .spinning { animation: spin 4s linear infinite; }
 
         /* 圣诞树容器 */
-        .tree-wrapper {
+        .tree-container {
             position: relative;
-            filter: drop-shadow(0 0 20px rgba(46, 204, 113, 0.4));
-            animation: floatTree 4s ease-in-out infinite;
+            filter: drop-shadow(0 0 15px rgba(46, 204, 113, 0.5));
+            animation: float 4s ease-in-out infinite;
             cursor: pointer;
+            margin-bottom: 20px;
         }
-        .tree-wrapper:active { transform: scale(0.95); }
+        
+        .star-glow {
+            transform-origin: center;
+            animation: starShine 2s infinite alternate;
+        }
 
-        /* 互动区域 */
-        .footer-interactive {
-            display: flex; justify-content: space-between; width: 320px; margin-top: -30px; position: relative; z-index: 20;
+        /* 互动人物 */
+        .footer-box {
+            display: flex;
+            justify-content: center;
+            gap: 60px;
+            margin-top: -20px;
+            z-index: 20;
         }
-        .character { width: 100px; height: 100px; cursor: pointer; transition: transform 0.2s; filter: drop-shadow(0 5px 10px rgba(0,0,0,0.5)); }
+
+        .character {
+            width: 90px; height: 90px;
+            cursor: pointer;
+            transition: transform 0.2s;
+            filter: drop-shadow(0 5px 10px rgba(0,0,0,0.5));
+        }
         .character:active { transform: scale(0.9); }
-        .santa-svg { animation: hoverSanta 3s ease-in-out infinite alternate; }
-        .gift-svg { animation: hoverGift 3.5s ease-in-out infinite alternate; }
+        
+        .santa-anim { animation: rock 3s ease-in-out infinite alternate; }
+        .gift-anim { animation: rock 4s ease-in-out infinite alternate-reverse; }
 
         /* 标题 */
-        .title-text {
-            font-family: 'Brush Script MT', cursive; font-size: 3.5rem; margin-top: 40px;
-            background: linear-gradient(to right, #fff, #ffd700, #fff); -webkit-background-clip: text; color: transparent;
-            text-shadow: 0 0 20px rgba(255, 215, 0, 0.5); text-align: center;
+        .title {
+            font-family: 'Brush Script MT', cursive;
+            font-size: 3.5rem;
+            margin-top: 30px;
+            background: linear-gradient(to right, #fff, #f1c40f, #fff);
+            -webkit-background-clip: text;
+            color: transparent;
+            text-shadow: 0 0 15px rgba(241, 196, 15, 0.5);
+            text-align: center;
         }
 
-        /* --- 弹窗 --- */
-        .modal-overlay {
-            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.6); z-index: 999; justify-content: center; align-items: center; backdrop-filter: blur(5px);
+        /* --- 弹窗样式 --- */
+        .modal {
+            display: none;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.7);
+            z-index: 1000;
+            justify-content: center; align-items: center;
+            backdrop-filter: blur(4px);
         }
-        .letter-card {
-            background: #fff; width: 80%; max-width: 350px; padding: 25px; border-radius: 15px;
-            text-align: center; transform: scale(0.8); opacity: 0; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            border: 4px solid #c0392b; box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+        .modal-content {
+            background: #fff8e1;
+            padding: 30px;
+            border-radius: 15px;
+            text-align: center;
+            width: 80%;
+            max-width: 320px;
+            border: 4px solid #c0392b;
+            box-shadow: 0 0 30px rgba(255,215,0,0.5);
+            transform: scale(0.8);
+            opacity: 0;
+            transition: all 0.3s;
         }
-        .modal-overlay.active .letter-card { transform: scale(1); opacity: 1; }
-        .letter-card h3 { color: #c0392b; margin: 0 0 10px 0; font-size: 1.5rem; }
-        .letter-card p { color: #333; font-size: 1.1rem; line-height: 1.6; }
-        .close-btn { margin-top: 20px; background: #27ae60; color: white; border: none; padding: 10px 30px; border-radius: 20px; font-size: 1rem; cursor: pointer; }
+        .modal.show .modal-content { transform: scale(1); opacity: 1; }
+        .modal h3 { color: #d35400; margin-top: 0; }
+        .modal p { color: #333; font-size: 1.1rem; line-height: 1.6; }
+        .close-btn {
+            background: #27ae60; color: white; border: none;
+            padding: 10px 25px; border-radius: 20px; font-size: 16px;
+            margin-top: 20px; cursor: pointer;
+        }
 
-        /* 动画 */
-        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
+        /* 动画定义 */
         @keyframes spin { 100% { transform: rotate(360deg); } }
-        @keyframes floatTree { 0% { transform: translateY(0); } 50% { transform: translateY(-10px); } 100% { transform: translateY(0); } }
-        @keyframes hoverSanta { 0% { transform: rotate(-2deg); } 100% { transform: rotate(2deg); } }
-        @keyframes hoverGift { 0% { transform: rotate(2deg); } 100% { transform: rotate(-2deg); } }
+        @keyframes float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+        @keyframes starShine { from { filter: drop-shadow(0 0 5px gold); } to { filter: drop-shadow(0 0 20px gold); } }
+        @keyframes rock { 0% { transform: rotate(-3deg); } 100% { transform: rotate(3deg); } }
 
-        @media (max-width: 600px) { .scene { transform: scale(0.85); } .title-text { font-size: 2.8rem; } }
+        /* 适配手机 */
+        @media (max-width: 600px) {
+            .title { font-size: 2.8rem; }
+            .tree-container svg { width: 260px; height: 320px; }
+        }
     </style>
 </head>
 <body>
 
-    <div id="start-screen">
-        <div style="font-size: 60px;">💌</div>
-        <p style="font-size: 18px; margin: 20px 0; color: #ddd;">佳佳，有一份圣诞礼物请查收</p>
-        <button class="start-btn" onclick="startExperience()">点击开启</button>
+    <div id="start-overlay">
+        <div style="font-size: 60px; margin-bottom: 20px;">🎄</div>
+        <div style="font-size: 18px; color: #eee;">佳佳，有一份专属礼物</div>
+        <button class="start-btn" onclick="initPage()">点击开启</button>
     </div>
 
-    <audio id="bgm" loop>
-        <source src="https://music.163.com/song/media/outer/url?id=479400249.mp3" type="audio/mp3">
-    </audio>
-    
-    <audio id="click-sound">
-        <source src="data:audio/mp3;base64,//uQZAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWgAAAA0AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABBWAMAgDQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZAAABiQk2QA0AAAAA0AAAAAAAE5QW8MAAAAAANAAAAAAAABAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA//uQZAABAAABAAAAAAAABAAAAAAAAAAAAQAAAAAAAAAAAAAAA" type="audio/mp3">
-        </audio>
+    <div id="main-scene">
+        <canvas id="snow-canvas"></canvas>
+        <div class="music-toggle" id="musicBtn" onclick="toggleMute()">🎵</div>
 
-    <div id="music-icon" class="music-control" onclick="toggleMusic()">🎵</div>
-    <canvas id="snow-canvas"></canvas>
-
-    <div class="scene" id="main-scene">
-        <div class="tree-wrapper" onclick="playClickSound(); openModal('🎄 圣诞树', '愿这棵树的星光<br>照亮你新的一年<br>每天都开开心心！')">
+        <div class="tree-container" onclick="showModal('🎄 圣诞树', '愿这棵树的星光<br>照亮你未来的每一天<br>永远开心快乐！')">
             <svg width="300" height="380" viewBox="0 0 200 260">
                 <rect x="90" y="220" width="20" height="40" fill="#5D4037" rx="2" />
                 <path d="M20,230 Q100,260 180,230 L160,190 L180,190 Q100,220 20,190 L40,190 L20,230 Z" fill="#1B5E20" />
                 <path d="M30,220 Q100,250 170,220 Q150,160 100,140 Q50,160 30,220" fill="#2E7D32" />
                 <path d="M40,160 Q100,190 160,160 Q145,110 100,90 Q55,110 40,160" fill="#43A047" />
                 <path d="M55,100 Q100,120 145,100 Q130,60 100,30 Q70,60 55,100" fill="#66BB6A" />
-                <circle cx="70" cy="180" r="5" fill="#E74C3C" /><circle cx="140" cy="170" r="5" fill="#F1C40F" />
-                <circle cx="90" cy="150" r="5" fill="#3498DB" /><circle cx="110" cy="200" r="6" fill="#FFF" opacity="0.8" />
-                <g style="transform-origin: center; animation: pulse 2s infinite">
-                    <path transform="translate(100, 30) scale(0.8)" d="M0,-15 L4,-4 L15,-4 L6,3 L9,14 L0,8 L-9,14 L-6,3 L-15,-4 L-4,-4 Z" fill="#FFD700" />
+                <circle cx="70" cy="180" r="6" fill="#c0392b" />
+                <circle cx="140" cy="170" r="6" fill="#f1c40f" />
+                <circle cx="90" cy="150" r="6" fill="#3498db" />
+                <circle cx="110" cy="200" r="5" fill="#fff" opacity="0.9" />
+                <g class="star-glow">
+                    <path transform="translate(100, 30) scale(0.9)" d="M0,-15 L4,-4 L15,-4 L6,3 L9,14 L0,8 L-9,14 L-6,3 L-15,-4 L-4,-4 Z" fill="#FFD700" />
                 </g>
             </svg>
         </div>
 
-        <div class="footer-interactive">
-            <div class="character santa-svg" onclick="playClickSound(); openModal('🎅 圣诞老人', 'HoHoHo~<br>不管外面多冷<br>我都会给你最暖的拥抱！')">
-                <svg width="100" height="100" viewBox="0 0 100 100">
+        <div class="footer-box">
+            <div class="character santa-anim" onclick="showModal('🎅 圣诞老人', 'HoHoHo~<br>不管世界怎么变<br>我都会一直守护你！')">
+                <svg width="100%" height="100%" viewBox="0 0 100 100">
                     <path d="M20,40 Q50,10 80,40 L75,55 L25,55 Z" fill="#D32F2F" />
                     <circle cx="80" cy="40" r="8" fill="#FFF" />
-                    <rect x="20" y="50" width="60" height="10" rx="5" fill="#FFF" />
-                    <circle cx="50" cy="65" r="20" fill="#FFCCBC" />
-                    <circle cx="43" cy="62" r="2" fill="#333" /><circle cx="57" cy="62" r="2" fill="#333" />
-                    <path d="M30,70 Q50,95 70,70 Q75,75 70,85 Q50,100 30,85 Q25,75 30,70" fill="#FFF" />
-                    <circle cx="50" cy="68" r="3" fill="#EF9A9A" />
+                    <rect x="20" y="50" width="60" height="12" rx="6" fill="#FFF" />
+                    <circle cx="50" cy="65" r="22" fill="#FFCCBC" />
+                    <circle cx="43" cy="62" r="2.5" fill="#333" />
+                    <circle cx="57" cy="62" r="2.5" fill="#333" />
+                    <path d="M28,70 Q50,95 72,70 Q78,75 72,88 Q50,105 28,88 Q22,75 28,70" fill="#FFF" />
+                    <circle cx="50" cy="68" r="4" fill="#e74c3c" />
                 </svg>
             </div>
-            <div class="character gift-svg" onclick="playClickSound(); openModal('🎁 神秘礼物', '叮！好运已到账！<br>祝我们顺顺利利，平平安安！')">
-                <svg width="90" height="90" viewBox="0 0 100 100">
-                    <ellipse cx="50" cy="85" rx="35" ry="8" fill="rgba(0,0,0,0.3)" />
-                    <rect x="20" y="40" width="60" height="45" rx="3" fill="#C0392B" />
-                    <rect x="15" y="35" width="70" height="15" rx="2" fill="#E74C3C" />
-                    <rect x="45" y="40" width="10" height="45" fill="#F1C40F" />
+            <div class="character gift-anim" onclick="showModal('🎁 惊喜礼物', '叮！好运已到账！<br>祝我们平平安安，顺顺利利！')">
+                <svg width="100%" height="100%" viewBox="0 0 100 100">
+                    <rect x="20" y="40" width="60" height="45" rx="4" fill="#C0392B" />
+                    <rect x="15" y="35" width="70" height="15" rx="3" fill="#E74C3C" />
+                    <rect x="45" y="35" width="10" height="50" fill="#F1C40F" />
                     <circle cx="50" cy="35" r="8" fill="#F1C40F" />
                 </svg>
             </div>
         </div>
 
-        <div class="title-text">Merry Christmas</div>
+        <div class="title">Merry Christmas</div>
     </div>
 
-    <div class="modal-overlay" id="modalOverlay">
-        <div class="letter-card">
-            <h3 id="modalTitle"></h3>
-            <p id="modalContent"></p>
-            <button class="close-btn" onclick="closeModal()">收到 ❤️</button>
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <h3 id="m-title"></h3>
+            <p id="m-content"></p>
+            <button class="close-btn" onclick="closeModal()">收下祝福 ❤️</button>
         </div>
     </div>
 
     <script>
-        // --- 核心逻辑：音效系统 ---
-        const bgm = document.getElementById('bgm');
-        const startScreen = document.getElementById('start-screen');
-        const mainScene = document.getElementById('main-scene');
-        const musicIcon = document.getElementById('music-icon');
+        // --- 核心：音频合成器 (不依赖外部链接) ---
+        const AudioEngine = {
+            ctx: null,
+            isPlaying: false,
+            osc: null,
+            timer: null,
+            noteIndex: 0,
+            
+            // Jingle Bells 简谱 (频率+时值)
+            melody: [
+                {f: 329.6, d: 200}, {f: 329.6, d: 200}, {f: 329.6, d: 400}, // 3 3 3-
+                {f: 0, d: 100}, // 休止
+                {f: 329.6, d: 200}, {f: 329.6, d: 200}, {f: 329.6, d: 400}, // 3 3 3-
+                {f: 0, d: 100},
+                {f: 329.6, d: 200}, {f: 392.0, d: 200}, {f: 261.6, d: 300}, {f: 293.7, d: 100}, {f: 329.6, d: 800}, // 3 5 1 2 3---
+                {f: 0, d: 200},
+                {f: 349.2, d: 200}, {f: 349.2, d: 200}, {f: 349.2, d: 300}, {f: 349.2, d: 100}, // 4 4 4 4
+                {f: 349.2, d: 200}, {f: 329.6, d: 200}, {f: 329.6, d: 200}, {f: 329.6, d: 100}, {f: 329.6, d: 100}, // 4 3 3 33
+                {f: 329.6, d: 200}, {f: 293.7, d: 200}, {f: 293.7, d: 200}, {f: 329.6, d: 200}, // 3 2 2 3
+                {f: 293.7, d: 400}, {f: 392.0, d: 400}, // 2- 5-
+                {f: 0, d: 400} // 循环间隔
+            ],
+
+            init() {
+                window.AudioContext = window.AudioContext || window.webkitAudioContext;
+                this.ctx = new AudioContext();
+            },
+
+            playNote(freq, duration) {
+                if (freq <= 0) return;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'triangle'; // 三角波，听起来像八音盒
+                osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                
+                // 音量包络 (淡入淡出，防止爆音)
+                gain.gain.setValueAtTime(0, this.ctx.currentTime);
+                gain.gain.linearRampToValueAtTime(0.1, this.ctx.currentTime + 0.05);
+                gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + duration/1000);
+
+                osc.start();
+                osc.stop(this.ctx.currentTime + duration/1000);
+            },
+
+            loop() {
+                if (!this.isPlaying) return;
+                const note = this.melody[this.noteIndex];
+                this.playNote(note.f, note.d);
+                
+                this.noteIndex = (this.noteIndex + 1) % this.melody.length;
+                this.timer = setTimeout(() => this.loop(), note.d * 1.1); // 稍微加点间隔
+            },
+
+            start() {
+                if (this.ctx.state === 'suspended') this.ctx.resume();
+                if (this.isPlaying) return;
+                this.isPlaying = true;
+                this.noteIndex = 0;
+                this.loop();
+            },
+
+            stop() {
+                this.isPlaying = false;
+                clearTimeout(this.timer);
+            },
+
+            // 简单的点击音效
+            playClick() {
+                if (this.ctx.state === 'suspended') this.ctx.resume();
+                const o = this.ctx.createOscillator();
+                const g = this.ctx.createGain();
+                o.connect(g);
+                g.connect(this.ctx.destination);
+                o.frequency.setValueAtTime(800, this.ctx.currentTime);
+                o.frequency.exponentialRampToValueAtTime(300, this.ctx.currentTime + 0.1);
+                g.gain.setValueAtTime(0.2, this.ctx.currentTime);
+                g.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.1);
+                o.start();
+                o.stop(this.ctx.currentTime + 0.1);
+            }
+        };
+
+        // --- 页面逻辑 ---
         
-        // 创建一个简单的“叮”声 (使用 AudioContext，这是最稳的方式，不需要文件)
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        
-        function playClickSound() {
-            // 每次点击生成一个清脆的电子音
-            if (audioCtx.state === 'suspended') audioCtx.resume();
-            const osc = audioCtx.createOscillator();
-            const gainNode = audioCtx.createGain();
-            osc.connect(gainNode);
-            gainNode.connect(audioCtx.destination);
+        // 1. 初始化
+        function initPage() {
+            // 初始化音频引擎
+            AudioEngine.init();
+            AudioEngine.start();
             
-            osc.type = 'sine';
-            osc.frequency.setValueAtTime(800, audioCtx.currentTime); // 频率
-            osc.frequency.exponentialRampToValueAtTime(300, audioCtx.currentTime + 0.1);
+            // 界面动画
+            const overlay = document.getElementById('start-overlay');
+            const scene = document.getElementById('main-scene');
+            const btn = document.getElementById('musicBtn');
             
-            gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
-            gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
-            
-            osc.start();
-            osc.stop(audioCtx.currentTime + 0.1);
-        }
-
-        // --- 1. 点击“开启”按钮逻辑 ---
-        function startExperience() {
-            // 1. 尝试播放背景音乐
-            bgm.volume = 0.5;
-            bgm.play().then(() => {
-                musicIcon.classList.add('music-spin');
-            }).catch(e => {
-                console.log("自动播放被拦截，等待交互");
-                musicIcon.classList.remove('music-spin');
-            });
-
-            // 2. 激活 AudioContext (为点击音效做准备)
-            if (audioCtx.state === 'suspended') audioCtx.resume();
-
-            // 3. 界面切换动画
-            startScreen.style.opacity = '0';
+            overlay.style.opacity = '0';
             setTimeout(() => {
-                startScreen.style.display = 'none';
-                mainScene.style.opacity = '1';
+                overlay.style.display = 'none';
+                scene.style.opacity = '1';
+                btn.classList.add('spinning');
             }, 800);
         }
 
-        // --- 2. 音乐开关 ---
-        function toggleMusic() {
-            if (bgm.paused) {
-                bgm.play();
-                musicIcon.classList.add('music-spin');
-                musicIcon.style.opacity = "1";
+        // 2. 音乐开关
+        function toggleMute() {
+            const btn = document.getElementById('musicBtn');
+            if (AudioEngine.isPlaying) {
+                AudioEngine.stop();
+                btn.classList.remove('spinning');
+                btn.style.opacity = '0.5';
             } else {
-                bgm.pause();
-                musicIcon.classList.remove('music-spin');
-                musicIcon.style.opacity = "0.5";
+                AudioEngine.start();
+                btn.classList.add('spinning');
+                btn.style.opacity = '1';
             }
         }
 
-        // --- 3. 弹窗控制 ---
-        const modal = document.getElementById('modalOverlay');
-        const mTitle = document.getElementById('modalTitle');
-        const mContent = document.getElementById('modalContent');
-
-        function openModal(title, content) {
-            mTitle.innerHTML = title;
-            mContent.innerHTML = content;
+        // 3. 弹窗控制
+        const modal = document.getElementById('modal');
+        function showModal(title, content) {
+            AudioEngine.playClick(); // 播放音效
+            document.getElementById('m-title').innerHTML = title;
+            document.getElementById('m-content').innerHTML = content;
             modal.style.display = 'flex';
-            setTimeout(() => modal.classList.add('active'), 10);
+            setTimeout(() => modal.classList.add('show'), 10);
         }
 
         function closeModal() {
-            playClickSound(); // 关闭也响一声
-            modal.classList.remove('active');
+            AudioEngine.playClick();
+            modal.classList.remove('show');
             setTimeout(() => modal.style.display = 'none', 300);
         }
 
-        // --- 4. 雪花特效 (优化版) ---
+        // 4. 雪花效果
         const canvas = document.getElementById('snow-canvas');
         const ctx = canvas.getContext('2d');
         let w, h;
-        const snowflakes = [];
-        
+        const flakes = [];
+
         function resize() { w = canvas.width = window.innerWidth; h = canvas.height = window.innerHeight; }
         window.addEventListener('resize', resize);
         resize();
 
-        class Snowflake {
-            constructor() { this.reset(); }
-            reset() {
-                this.x = Math.random() * w;
-                this.y = Math.random() * -h;
-                this.size = Math.random() * 2 + 1;
-                this.speed = Math.random() * 1 + 0.5;
-                this.opacity = Math.random() * 0.5 + 0.3;
-            }
-            update() {
-                this.y += this.speed;
-                if (this.y > h) this.reset();
-                ctx.fillStyle = `rgba(255, 255, 255, ${this.opacity})`;
-                ctx.beginPath(); ctx.arc(this.x, this.y, this.size, 0, Math.PI*2); ctx.fill();
-            }
+        function createFlake() {
+            return {
+                x: Math.random() * w, y: Math.random() * -h,
+                r: Math.random() * 3 + 1,
+                s: Math.random() * 1 + 0.5
+            };
         }
-        for (let i = 0; i < 100; i++) snowflakes.push(new Snowflake());
-        function animate() { ctx.clearRect(0,0,w,h); snowflakes.forEach(s => s.update()); requestAnimationFrame(animate); }
-        animate();
+        for(let i=0; i<80; i++) flakes.push(createFlake());
+
+        function drawSnow() {
+            ctx.clearRect(0, 0, w, h);
+            ctx.fillStyle = 'rgba(255,255,255,0.7)';
+            ctx.beginPath();
+            flakes.forEach(f => {
+                ctx.moveTo(f.x, f.y);
+                ctx.arc(f.x, f.y, f.r, 0, Math.PI*2);
+                f.y += f.s;
+                if(f.y > h) f.y = -10;
+            });
+            ctx.fill();
+            requestAnimationFrame(drawSnow);
+        }
+        drawSnow();
 
     </script>
 </body>
